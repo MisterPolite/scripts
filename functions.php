@@ -7,7 +7,7 @@
 define("APP_VERSION", "1.0");
 define("DEFAULT_SCRIPT_DIR", "scripts");
 define("LOG_FILE", "logs.log");
-define("GITHUB_REPO_URL", "https://github.com/script");
+define("GITHUB_REPO_URL", "https://github.com/MisterPolite/scripts");
 define("COLOR_PRIMARY", "\033[38;2;41;128;255m");
 define("COLOR_SECONDARY", "\033[38;2;0;255;127m");
 define("COLOR_ACCENT", "\033[38;2;255;69;0m");
