@@ -2,12 +2,12 @@
 /**
  * Script list by writer
  * @author @scpwhite,
- * @version 1
+ * @version 1.1
 */
 define("APP_VERSION", "1.0");
 define("DEFAULT_SCRIPT_DIR", "scripts");
 define("LOG_FILE", "logs.log");
-define("GITHUB_REPO_URL", "https://github.com/MisterPolite/scripts");
+define("GITHUB_REPO_URL", "https://github.com/script");
 define("COLOR_PRIMARY", "\033[38;2;41;128;255m");
 define("COLOR_SECONDARY", "\033[38;2;0;255;127m");
 define("COLOR_ACCENT", "\033[38;2;255;69;0m");
@@ -407,7 +407,7 @@ class Functions {
         return $return == "all" ? $response : ($response[$return] ?? null);
     }
     
-    public function post($link, $header = [], $request, $follow = 1, $return = "data") {
+    public function post($link, $header = [], $request = "" , $follow = 1, $return = "data") {
         $response = $this->curl($link, $header, "POST", $follow, $request);
         return $return == "all" ? $response : ($response[$return] ?? null);
     }
@@ -930,6 +930,7 @@ class Scripts {
             try {
                 $mainMenuOptions = [
                     "Show All Scripts",
+                    "Update Repository",
                     "About",
                     "Exit"
                 ];                
@@ -941,12 +942,15 @@ class Scripts {
                 if ($selectedOption === "Show All Scripts") {
                     $this->showAllScripts();
                     Terminal::waitForKey();
+                } else if ($selectedOption === "Update Repository") {
+                    $this->updateRepository();
+                    Terminal::waitForKey();
                 } else if ($selectedOption === "About") {
                     $this->showAbout();
                 } else if ($selectedOption === "Exit") {
                     Terminal::clear();
-                    Terminal::banner("Script Library", "Goodbye!");
-                    Terminal::info("Thank you for using the Script Library System");
+                    Terminal::banner("Writer", "Goodbye!");
+                    Terminal::info("Thank you for using the Script.");
                     exit(0);
                 } else {
                     $this->showScriptsMenu($selectedOption);
@@ -955,6 +959,21 @@ class Scripts {
                 $this->logger->error("Main menu error: {$e->getMessage()}");
                 Terminal::error("Error: " . $e->getMessage());
                 Terminal::waitForKey();
+            }
+        }
+    }
+    private function updateRepository() {
+        Terminal::info("Updating repository...");
+        $output = [];
+        $returnVar = 0;
+        exec('git pull 2>&1', $output, $returnVar);
+        
+        if ($returnVar === 0) {
+            Terminal::success("Repository updated successfully!");
+        } else {
+            Terminal::error("Failed to update repository:");
+            foreach ($output as $line) {
+                Terminal::error($line);
             }
         }
     }
