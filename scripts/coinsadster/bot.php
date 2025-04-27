@@ -2,7 +2,7 @@
 /**
  * Coinadster Bot Script
  * @author @scpwhite
- * @version 1.0
+ * @version 1.1
  */
 error_reporting(1);
 class Bot {
@@ -95,6 +95,10 @@ class Bot {
         }
         $url = "https://{$this->host}/";
         $data = $this->functions->get($url, $this->header, 1);
+        if(str_contains($data, 'You have reached the daily limit of')){
+            echo "You have reached the daily limit of faucet claims. Please come back tomorrow.\n";
+            exit();
+        }
         if(!$data) {
             $this->functions->timer("Waiting for connection", 5);
             $this->faucet($try + 1);
