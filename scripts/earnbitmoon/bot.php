@@ -2,7 +2,7 @@
 /**
  * Earnbitmoon Bot Script
  * @author @scpwhite
- * @version 1.0
+ * @version 1.1
  */
 error_reporting(1);
 class Bot {
@@ -161,7 +161,7 @@ class Bot {
                     echo Color::$bw."Today".Color::$br." : ".Color::$bg. (int)$today + 1 ." Claims\n";
                     echo Color::$bw."Icon Time".Color::$br." : ".Color::$bg. ($end - $start)."\n";
                     echo Color::$res;
-                    echo self::$line;
+                    $this-> getUserInfo();
                     $this->faucet();
                 }
             }
@@ -220,8 +220,7 @@ class Bot {
                     echo Color::$bw."Ptc Timer".Color::$br." : ".Color::$g.$timer."\n";
                     echo Color::$bw."Redirect".Color::$br."  : ".Color::$g.$data["redirect"]."\n";
                     echo Color::$bw."Icon Time".Color::$br." : ".Color::$bg. ($end - $start)."\n";
-                    echo Color::$res;
-                    echo self::$line;
+                    $this-> getUserInfo();
                     $this->ptc();
                 }
             }
