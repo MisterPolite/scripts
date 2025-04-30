@@ -2,7 +2,7 @@
 /**
  * Feyorra Bot Script
  * @author @scpwhite
- * @version 1.0
+ * @version 1.1
  */
 error_reporting(1);
 class Bot {
@@ -60,7 +60,7 @@ class Bot {
         }
         $url = "https://{$this->host}/dashboard";
         $data = $this->functions->get($url, $this->header, 1);
-        if(str_contains($data, "<a class=\"navbar-links\" href=\"https://{$this->host}/login\">Login</a>")) {
+        if(str_contains($data, "<a href=\"https://{$this->host}/login\" class=\"btn-one onlybordered\">")) {
             $this->remove("cookie");
             $this->__construct($this->functions);
         } else if(!$data) {
