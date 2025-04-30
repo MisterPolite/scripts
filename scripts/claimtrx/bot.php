@@ -98,23 +98,24 @@ class Bot {
         $token = $this->getStr($data, '<input type="hidden" name="token" value="','">');
         $image = $this->getStr($data, '<img id="Imageid" src="','"');
         $value  =$this->getStr($data, '<input type="number" class="form-control border border-dark mb-3" name="','" value="">');
-        $images = $image ? $this->functions->get($image, $this->headers) : $this->faucet($try + 1);
-        $gif = "";
-        try {
-            file_put_contents(dirname(__FILE__)."/images.gif", $images);
-            $gifs = $this->captcha->__giftotext(dirname(__FILE__).'/images.gif');
-            foreach ($gifs as $gif) {
-                $gif = str_replace("\n", "", $gif);
-                if (strlen($gif) >= 4 && ctype_digit($gif)) {
-                    break;
+        if($image && $value){
+            $images = $image ? $this->functions->get($image, $this->headers) : $this->faucet($try + 1);
+            $gif = "";
+            try {
+                file_put_contents(dirname(__FILE__)."/images.gif", $images);
+                $gifs = $this->captcha->__giftotext(dirname(__FILE__).'/images.gif');
+                foreach ($gifs as $gif) {
+                    $gif = str_replace("\n", "", $gif);
+                    if (strlen($gif) >= 4 && ctype_digit($gif)) {
+                        break;
+                    }
                 }
+            } catch (Exception $e) {
+                echo "Error: " . $e->getMessage()."\n";
+                $this->functions->timer("Wait for", 5);
+                $this->faucet($try + 1);
             }
-        } catch (Exception $e) {
-            echo "Error: " . $e->getMessage()."\n";
-            $this->functions->timer("Wait for", 5);
-            $this->faucet($try + 1);
         }
-        
         $link = "https://{$this->host}/faucet/verify";
         $request = "csrf_token_name={$csrf}&token={$token}&{$value}={$gif}";
         $data = $this->functions->post($link, $this->headers, $request, 1);
