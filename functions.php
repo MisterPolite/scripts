@@ -2,7 +2,7 @@
 /**
  * Script list by writer
  * @author @scpwhite,
- * @version 1.2
+ * @version 1
 */
 define("APP_VERSION", "1.0");
 define("DEFAULT_SCRIPT_DIR", "scripts");
@@ -63,6 +63,66 @@ class FreeCaptcha{
         @unlink($path);
         return $results;
     }
+    public function __selectCaptcha(array $json) {
+        $question = $json['data']['question'] ?? null;
+        if (!$question) {
+            return;
+        }
+        if (strpos($question, 'displays the') !== false && isset($json['data']['choices_a'])) {
+            preg_match('/displays the ([a-z]+)/i', $question, $matches);
+            $keyword = $matches[1] ?? null;
+            foreach ($json['data']['choices_a'] as $choice) {
+                if (isset($choice['alt']) && strtolower($choice['alt']) === strtolower($keyword)) {
+                    return $keyword;
+                }
+            }
+            return;
+        }
+      
+        if (isset($json['data']['choices_bc'])) {
+            $knownAnswers = [
+                "circle,triangle,square,refrigerator" => "refrigerator",
+                "germany,italy,night,spain" => "night",
+                "light,left,right,down" => "light",
+                "run,black,watch,make" => "black",
+                "sun,cloud,rain,train" => "train",
+                "car,way,bus,truck" => "way",
+                "false,true,silent,tree" => "silent",
+                "cook,true,silent,tree" => "boy",
+                "lion,eagle,sparrow,pigeon" => "lion",
+                "tired,view,verdict,pretty" => "pretty",
+                "rest,love,hope,best" => "love",
+                "wait,wear,warm,warn" => "warn",
+                "run,laugh,play,orange" => "orange",
+                "ugly,awesome,pretty,good" => "ugly",
+                "artificial,art,air,strange" => "artificial",
+                "mountain,sun,clock,river" => "clock",
+                "cold,cloud,fire,water" => "cold",
+                "Germany,Italy,Night,Spain" => "Night",
+                "girl,mother,doughter,plane" => "plane",
+                "run,walk,talk,awake" => "awake",
+                "cook,wake,boy,look" => "boy",
+                "late,never,always,bad" => "bad",
+                "perhaps,usual,never,secure" => "secure",
+                "football,volleyball,tower,track and field" => "tower",
+                "perform,cut,slash,break" => "perform",
+                "pen,eraser,potato,paper" => "potato",  
+                "fire,brown,gray,purple" => "fire",
+                "glass,cucumber,coconut,banana" => "glass",
+                "freedom,precision,draft,huge" => "huge",
+            ];
+      
+            $choices = array_map(fn($c) => strtolower($c['choice']), $json['data']['choices_bc']);
+            $choicesKey = implode(",", $choices);
+            if (isset($knownAnswers[$choicesKey])) {
+                $answer = $knownAnswers[$choicesKey];
+                return $answer;
+            } else {
+                return;
+            }
+        }
+        return;
+      }
 }
 class Captcha{
     static private $url;
@@ -271,10 +331,12 @@ class Functions {
                 CURLOPT_SSL_VERIFYPEER => false,
                 CURLOPT_SSL_VERIFYHOST => false,
                 CURLOPT_HEADER => true,
-                CURLOPT_TIMEOUT => 60,
-				CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_3,
-                CURLOPT_SSL_CIPHER_LIST => 'TLS_AES_128_GCM_SHA256:ECDHE-RSA-AES128-GCM-SHA256'
+                CURLOPT_TIMEOUT => 60
             ];
+            if (parse_url($url, PHP_URL_HOST) == "earnbitmoon.club") {
+                $options[CURLOPT_SSLVERSION] = CURL_SSLVERSION_TLSv1_3;
+                $options[CURLOPT_SSL_CIPHER_LIST] = 'TLS_AES_128_GCM_SHA256:ECDHE-RSA-AES128-GCM-SHA256';
+            }
             if (strtoupper($method) === "POST") {
                 $options[CURLOPT_POST] = true;
                 $options[CURLOPT_POSTFIELDS] = $request;
@@ -651,50 +713,6 @@ class Color {
         }
     }
 }
-
-class SystemUtils {
-    public static function clearScreen() {
-        $os = strtolower(php_uname('s'));
-        if (strpos($os, 'windows') !== false) {
-            echo "\e[H\e[J";
-        } else {
-            system('clear');
-        }
-    }
-
-    public static function fetchFromUrl($url, $timeout = 10) {
-        try {
-            if (!filter_var($url, FILTER_VALIDATE_URL)) {
-                throw new InvalidArgumentException("Invalid URL provided: $url");
-            }
-            $context = stream_context_create([
-                "ssl" => [
-                    "verify_peer" => true,
-                    "verify_peer_name" => true
-                ],
-                "http" => [
-                    "timeout" => $timeout,
-                    "user_agent" => "PHP Script/1.0",
-                    "follow_location" => 1,
-                    "max_redirects" => 3
-                ]
-            ]);
-            $content = @file_get_contents($url, false, $context);
-            if ($content === false) {
-                $error = error_get_last();
-                throw new RuntimeException("Failed to fetch content: " . ($error['message'] ?? "Unknown error"));
-            }
-            if (empty($content)) {
-                throw new RuntimeException("Fetched content is empty from URL: $url");
-            }
-            return $content;
-        } catch (InvalidArgumentException|RuntimeException|Throwable $e) {
-            Color::status($e->getMessage(), 'error');
-            return false;
-        }
-    }
-}
-
 
 class Terminal {
     private static $termWidth = 80;
