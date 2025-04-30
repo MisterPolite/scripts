@@ -1004,7 +1004,7 @@ class Scripts {
         }
     }
     private function updateRepository() {
-        $repoPath = __DIR__ . '/Scripts';
+        $repoPath = __DIR__;
         if (!is_dir($repoPath)) {
             Terminal::error("Folder not found: $repoPath");
             Terminal::waitForKey();
