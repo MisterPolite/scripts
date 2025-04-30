@@ -165,7 +165,7 @@ class Bot {
                 $url = "https://icefaucet.com/api/faucet/values/";
                 $data = json_decode($this->functions->get($url, $this->header), true);
                 echo Color::$bp."[ ".Color::$bg.date("F D Y h:i:s A").Color::$bp." ]\n";
-                echo Color::$bw."Message".Color::$br." : ".Color::$bg."{$data['pcoin']}\n";
+                echo Color::$bw."Message".Color::$br." : ".Color::$bg."You earned {$data['pcoin']} from faucet\n";
                 echo self::$line;
                 $this->claim();
             }
