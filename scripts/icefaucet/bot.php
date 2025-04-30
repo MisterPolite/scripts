@@ -67,12 +67,7 @@ class Bot {
         $url = "https://{$this->host}/api/login/";
         $request = json_encode(["email" => $this->email, "password" => $this->password]);
         $data = json_decode($this->functions->post($url, $this->headers, $request), true);
-        if(str_contains($data['detail'], 'successfully')){
-            $url = "https://icefaucet.com/api/token/";
-            $data = json_decode($this->functions->post($url, $this->headers, $request), true);
-            $this->silentSave("refresh", $data['refresh']);
-            $this->silentSave("access", $data['access']);
-        } else if(str_contains($data['detail'][0], 'not registered')){
+        if(str_contains($data['detail'][0], 'not registered')){
             echo $data['detail'][0]."\n";
             $this->remove("email");
             $this->save("email");
@@ -82,8 +77,12 @@ class Bot {
             $this->remove("password");
             $this->save("password");
             $this->login($try + 1);
+        } else if(str_contains($data['detail'], 'successfully')){
+            $url = "https://icefaucet.com/api/token/";
+            $data = json_decode($this->functions->post($url, $this->headers, $request), true);
+            $this->silentSave("refresh", $data['refresh']);
+            $this->silentSave("access", $data['access']);
         }
-        exit;
     }
     private function refreshAccess($try = 0) {
         if($try >= 50) {
@@ -165,7 +164,7 @@ class Bot {
                 $url = "https://icefaucet.com/api/faucet/values/";
                 $data = json_decode($this->functions->get($url, $this->header), true);
                 echo Color::$bp."[ ".Color::$bg.date("F D Y h:i:s A").Color::$bp." ]\n";
-                echo Color::$bw."Message".Color::$br." : ".Color::$bg."You earned {$data['pcoin']} from faucet\n";
+                echo Color::$bw."Message".Color::$br." : ".Color::$bg."{$data['pcoin']}\n";
                 echo self::$line;
                 $this->claim();
             }
