@@ -2,7 +2,7 @@
 /**
  * Script list by writer
  * @author @scpwhite,
- * @version 1.1
+ * @version 1.2
 */
 define("APP_VERSION", "1.0");
 define("DEFAULT_SCRIPT_DIR", "scripts");
@@ -29,16 +29,39 @@ class FreeCaptcha{
         if (empty($result)) {
             exit("Error: Command '$command' not found. Please install tesseract\n");
         }
-    
         return true;
     }     
-    public function __imagetotext($image){
+    public function __imagetotext($path){
         $this->commandExists("tesseract");
-        shell_exec("convert $image -grayscale Rec709Luminance -sharpen 0x1 -threshold 50% processed_captcha.png");
+        shell_exec("convert $path -grayscale Rec709Luminance -sharpen 0x1 -threshold 50% processed_captcha.png");
         $tesseractCommand = "tesseract processed_captcha.png stdout -l eng --psm 7 --oem 1 -c tessedit_char_whitelist=\"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\"";
         $result = shell_exec($tesseractCommand);
         $captchaText = preg_replace('/[^A-Z0-9]/', '', $result);
         return $captchaText;
+    }
+    public function __giftotext($path) {
+        $gifPath = $path;
+        $frameDir = "images/";
+        
+        if (!file_exists($frameDir)) {
+            mkdir($frameDir);
+        }
+        $cmd = "ffmpeg -i $gifPath {$frameDir}frame_%03d.png 2>nul";
+        shell_exec($cmd);
+        $frameFiles = glob($frameDir . "*.png");
+        $results = [];
+        foreach ($frameFiles as $frameFile) {
+            $ocr = shell_exec("tesseract $frameFile stdout --psm 11 -c tessedit_char_whitelist=0123456789 2>nul");
+            $ocr = @trim($ocr);
+            if (!empty($ocr)) {
+                $results[] = $ocr;
+            }
+            unlink($frameFile);
+        }
+        @unlink(@trim($path, "'\""));
+        @rmdir('images'); 
+        @unlink($path);
+        return $results;
     }
 }
 class Captcha{
@@ -157,7 +180,7 @@ class Captcha{
         }
         return "Unknown error: $errorCode";
     }
-    private function getCaptchaSolution(array $requestInfo){
+    private function getCaptchaSolution(array $requestInfo, string $type){
         $requestCaptchaID = $this->requestCaptchaSolution($requestInfo);
         if ($requestCaptchaID === false) {
             return ['error' => true, 'message' => 'Failed to request captcha.', 'response' => []];
@@ -176,7 +199,7 @@ class Captcha{
                 if ($result['request'] === 'ERROR_KEY_DOES_NOT_EXIST') {
                     exit("API Key error: {$errorMessage}\n");
                 }
-                $this->function->timer("[$i] Waiting for captcha", self::$sleep);
+                $this->function->timer("[$i] ".$result['request']." {$type}", self::$sleep);
                 continue;
             }
             if ((int)$result['status'] === 1) {
@@ -191,7 +214,7 @@ class Captcha{
             return ['error' => true, 'message' => 'Required parameters not provided.', 'response' => []];
         }
         $requestInfo = ['method' => 'hcaptcha', 'sitekey' => $sitekey, 'pageurl' => $pageurl ];
-        return $this->getCaptchaSolution($requestInfo);
+        return $this->getCaptchaSolution($requestInfo, "Hcaptcha");
     }
 
     public function reCaptchaV2($googlekey = '', $pageurl = ''){
@@ -203,7 +226,7 @@ class Captcha{
             'googlekey' => $googlekey,
             'pageurl' => $pageurl
         ];
-        return $this->getCaptchaSolution($requestInfo);
+        return $this->getCaptchaSolution($requestInfo, "RecaptchaV2");
     }
     public function turnstile($sitekey = '', $pageurl = ''){
         if (empty($sitekey) || empty($pageurl)) {
@@ -214,14 +237,14 @@ class Captcha{
             'sitekey' => $sitekey,
             'pageurl' => $pageurl
         ];
-        return $this->getCaptchaSolution($requestInfo);
+        return $this->getCaptchaSolution($requestInfo, "Turnstile");
     }
     public function antiBot(array $images = []){
         if (count($images) < 3) {
             return ['error' => true, 'message' => 'Antibot requires at least 3 images.', 'response' => []];
         }
         $requestInfo = ['method' => 'antibot'] + $images;
-        return $this->getCaptchaSolution($requestInfo);
+        return $this->getCaptchaSolution($requestInfo, "Antibot");
     }
 }
 
@@ -813,8 +836,8 @@ class Scripts {
             }
             $files = scandir($this->scriptPath);
             foreach ($files as $file) {
-                if ($file == '.' || $file == '..') continue;
-                if (is_dir($this->scriptPath.'/'.$file)) {
+                if ($file == '.' || $file == '..' || $file == '.git') continue;
+                if (is_dir($this->scriptPath . '/' . $file)) {
                     $categories[] = $file;
                 }
             }
@@ -963,11 +986,53 @@ class Scripts {
         }
     }
     private function updateRepository() {
+        $repoPath = __DIR__ . '/Scripts';
+        if (!is_dir($repoPath)) {
+            Terminal::error("Folder not found: $repoPath");
+            Terminal::waitForKey();
+            return;
+        }
+        if (!is_dir($repoPath.'/.git')) {
+            Terminal::warning("No Git repository found at $repoPath.");
+            Terminal::info("Initializing new Git repository...");
+            exec("cd \"$repoPath\" && git init 2>&1", $outputInit, $returnInit);
+            if ($returnInit !== 0) {
+                Terminal::error("Failed to initialize Git:");
+                foreach ($outputInit as $line) {
+                    Terminal::error($line);
+                }
+                Terminal::waitForKey();
+                return;
+            }
+            Terminal::info("Adding all files to Git...");
+            exec("cd \"$repoPath\" && git add . 2>&1", $outputAdd, $returnAdd);
+            if ($returnAdd !== 0) {
+                Terminal::error("Failed to add files:");
+                foreach ($outputAdd as $line) {
+                    Terminal::error($line);
+                }
+                Terminal::waitForKey();
+                return;
+            }
+            Terminal::info("Making initial commit...");
+            exec("cd \"$repoPath\" && git commit -m \"Initial commit\" 2>&1", $outputCommit, $returnCommit);
+            if ($returnCommit !== 0) {
+                Terminal::error("Failed to commit:");
+                foreach ($outputCommit as $line) {
+                    Terminal::error($line);
+                }
+                Terminal::waitForKey();
+                return;
+            }
+
+            Terminal::success("Repository initialized and initial commit done!");
+            Terminal::waitForKey();
+            return;
+        }
         Terminal::info("Updating repository...");
         $output = [];
         $returnVar = 0;
-        exec('git pull 2>&1', $output, $returnVar);
-        
+        exec("cd \"$repoPath\" && git pull 2>&1", $output, $returnVar);
         if ($returnVar === 0) {
             Terminal::success("Repository updated successfully!");
         } else {
@@ -976,8 +1041,9 @@ class Scripts {
                 Terminal::error($line);
             }
         }
+        Terminal::waitForKey();
     }
-    
+
     public function showScriptsMenu($category) {
         while (true) {
             try {
