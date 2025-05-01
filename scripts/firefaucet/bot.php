@@ -35,6 +35,7 @@ class Bot {
             $this->faucet();
         }
         $this->autofaucet();
+        $this->claim();
     }
     
     public function setHeader($parameters = []) {
@@ -229,6 +230,9 @@ class Bot {
         }
     }
     public function autofaucet() {
+        if($this->isFaucetReady()){
+            $this->claim();
+        }
         $url = "https://firefaucet.win/";
         $data = $this->functions->get($url, $this->header);
         $csrf = $this->getStr($data, '<input type="hidden" name="csrf_token" value="', '">');
