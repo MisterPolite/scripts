@@ -264,8 +264,7 @@ class Bot {
             return;
         }
         if (isset($data["balance"])) {
-            $cryptoKey = strtoupper($this->save("crypto"));
-            $logs = $data["logs"][$crypto] ?? 0;
+            $logs = $data["logs"][strtoupper($crypto)] ?? 0;
             echo Color::$bg . "Time      " . Color::$br . " : " . Color::$bw . Color::$bg . "[ " . Color::$bw . date("h:i:s") . Color::$bg . " ]\n";
             echo Color::$bg . "AutoFaucet" . Color::$br . " : " . Color::$bw . number_format($logs / 100000000, 8, '.', '') . " $crypto\n";
             echo Color::$bg . "Balance   " . Color::$br . " : " . Color::$bw . $data["balance"] . "\n";
