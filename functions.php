@@ -15,29 +15,11 @@ define("COLOR_INFO", "\033[38;2;30;144;255m");
 define("COLOR_WARNING", "\033[38;2;255;165;0m");
 define("COLOR_RESET", "\033[0m");
 define("COLOR_SUCCESS", "\033[1;32m");
-class FreeCaptcha{
-    public function commandExists($command) {
-        $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
-        if ($isWindows) {
-            $whereCommand = 'where ' . $command . ' 2>nul';
-            $result = shell_exec($whereCommand);
-        } else {
-            $whichCommand = 'which ' . $command . ' 2>/dev/null';
-            $result = shell_exec($whichCommand);
-        }
-        unlink('null');
-        if (empty($result)) {
-            exit("Error: Command '$command' not found. Please install tesseract\n");
-        }
-        return true;
-    }     
+class FreeCaptcha{  
     public function __imagetotext($path){
-        $this->commandExists("tesseract");
-        shell_exec("convert $path -grayscale Rec709Luminance -sharpen 0x1 -threshold 50% processed_captcha.png");
-        $tesseractCommand = "tesseract processed_captcha.png stdout -l eng --psm 7 --oem 1 -c tessedit_char_whitelist=\"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\"";
+        $tesseractCommand = "tesseract $path stdout -l eng --psm  --oem 1 -c tessedit_char_whitelist=\"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\"";
         $result = shell_exec($tesseractCommand);
-        $captchaText = preg_replace('/[^A-Z0-9]/', '', $result);
-        return $captchaText;
+        return $result;
     }
     public function __giftotext($path) {
         $gifPath = $path;
@@ -305,6 +287,12 @@ class Captcha{
         }
         $requestInfo = ['method' => 'antibot'] + $images;
         return $this->getCaptchaSolution($requestInfo, "Antibot");
+    }
+    public function ocr($image){
+        if(empty($image))
+            return ['error' => true,'message' => 'required parameters not found', 'response' => []];
+        $requestInfo = ['method' => 'universal', 'body' => $image];
+        return $this->getCaptchaSolution($requestInfo, "OCR");
     }
 }
 
@@ -1004,7 +992,7 @@ class Scripts {
         }
     }
     private function updateRepository() {
-        $repoPath = __DIR__;
+        $repoPath = __DIR__ . '/Scripts';
         if (!is_dir($repoPath)) {
             Terminal::error("Folder not found: $repoPath");
             Terminal::waitForKey();
