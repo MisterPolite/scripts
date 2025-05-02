@@ -4,7 +4,7 @@
  * @author @scpwhite
  * @version 1.0
  */
-error_reporting(1);
+//error_reporting(1);
 class Bot {
     private $functions;
     private $user_agent, $cookie;
@@ -126,7 +126,17 @@ class Bot {
             $url = "https://firefaucet.win/ptc/";
             $data = $this->functions->get($url, $this->header, 1);
             preg_match("/var\s+([a-zA-Z0-9_$]+)\s*=\s*\[\s*'(\d+)'\s*\]/", $data, $ids);
-            $link = "https://firefaucet.win/viewptc?id={$ids[2]}";
+            $id = @$ids[2];
+            if(empty($id)){
+                preg_match("/new_ptc\('(\d+)'\)/", $data, $ids);
+                $id = $ids[1];
+            } else{
+                echo Color::$bg."Message ".Color::$br." : ".Color::$bw."Somethings wrong with ptc\n";
+                echo Color::$bg."Message ".Color::$br." : ".Color::$bw."Contact @scpwhite in telegram\n";
+                echo self::$line;
+                return;
+            }
+            $link = "https://firefaucet.win/viewptc?id={$id}";
             $data = $this->functions->get($link, $this->header);
             $time = $this->getStr($data,"var timer = parseInt('","')");
             $csrf = $this->getStr($data,'<input type="hidden" name="csrf_token" value="','">');
@@ -136,7 +146,7 @@ class Bot {
             if($time > 5){
                 $this->functions->timer("Viewing ads", $time - 5);
             }
-            $link = "https://firefaucet.win/ptcverify?key=$key&id={$ids[2]}";
+            $link = "https://firefaucet.win/ptcverify?key=$key&id={$id}";
             $text = $ocr['response'];
             $request = "captcha={$text}&csrf_token={$csrf}";
             $data = $this->functions->post($link, $this->header,$request);
@@ -226,12 +236,12 @@ class Bot {
             echo Color::$bg."Faucet".Color::$br." : ".Color::$bw."$success\n";
             echo Color::$bg."Apikey".Color::$br." : ".Color::$bw.$this->captcha->balance()."\n";
             echo self::$line;
-          //  return;
+            return;
         }
     }
     public function autofaucet() {
         if($this->isFaucetReady()){
-            $this->claim();
+            $this->faucet();
         }
         $url = "https://firefaucet.win/";
         $data = $this->functions->get($url, $this->header);
