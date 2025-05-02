@@ -4,7 +4,7 @@
  * @author @scpwhite
  * @version 1.0
  */
-//error_reporting(1);
+error_reporting(1);
 class Bot {
     private $functions;
     private $user_agent, $cookie;
@@ -143,13 +143,12 @@ class Bot {
             $key = $this->getStr($data,"onclick=continueptc('","')");
             $image = $this->getStr($data,"<img src='data:image/png;base64,","'>");
             $ocr = $this->captcha->ocr($image);
-            if($time > 5){
-                $this->functions->timer("Viewing ads", $time - 5);
-            }
+            $this->functions->timer("Viewing ads [$id]", $time);
             $link = "https://firefaucet.win/ptcverify?key=$key&id={$id}";
             $text = $ocr['response'];
             $request = "captcha={$text}&csrf_token={$csrf}";
             $data = $this->functions->post($link, $this->header,$request);
+            echo Color::$bg."Captcha ".Color::$br."   : ".Color::$bw."$text\n";
             if($data == 'Success'){
                 $user = $this->user();
                 $acp = trim(str_replace("ACP", '', $user['acp_balance']));
