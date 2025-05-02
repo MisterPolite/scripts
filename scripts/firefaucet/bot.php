@@ -31,10 +31,10 @@ class Bot {
     
     public function claim() {
         $this->ptc();
+        $this->faucetTimer();
         if($this->isFaucetReady()){
             $this->faucet();
         }
-        $this->autofaucet();
         $this->claim();
     }
     
