@@ -291,7 +291,12 @@ class Captcha{
     public function ocr($image){
         if(empty($image))
             return ['error' => true,'message' => 'required parameters not found', 'response' => []];
-        $requestInfo = ['method' => 'universal', 'body' => $image];
+        if (self::$url == 'http://api.sctg.xyz/') {
+            $method = 'base64';
+        } else{
+            $method = 'universal';
+        }
+        $requestInfo = ['method' => $method, 'body' => $image];
         return $this->getCaptchaSolution($requestInfo, "OCR");
     }
 }
