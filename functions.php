@@ -241,7 +241,7 @@ class Captcha{
                 if ($result['request'] === 'ERROR_KEY_DOES_NOT_EXIST') {
                     exit("API Key error: {$errorMessage}\n");
                 }
-                $this->function->timer("[$i] ".$result['request']." {$type}", self::$sleep);
+                $this->function->timer("[$i]/".self::$max_attempts." ".$result['request']." {$type}", self::$sleep);
                 continue;
             }
             if ((int)$result['status'] === 1) {
