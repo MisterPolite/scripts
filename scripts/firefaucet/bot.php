@@ -147,10 +147,8 @@ class Bot {
             $this->functions->timer("Viewing ads [$id]", $time);
             $link = "https://firefaucet.win/ptcverify?key=$key&id={$id}";
             $text = $ocr['response'];
-            print_r($ocr);
             $request = "captcha={$text}&csrf_token={$csrf}";
             $data = $this->functions->post($link, $this->header,$request);
-            echo Color::$bg."Captcha ".Color::$br."   : ".Color::$bw."$text\n";
             if($data == 'Success'){
                 $user = $this->user();
                 $acp = trim(str_replace("ACP", '', $user['acp_balance']));
