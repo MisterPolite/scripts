@@ -82,6 +82,7 @@ class Bot {
         echo Color::$bw."ACP".Color::$br." : ".Color::$by."{$acp_balance}\n";
         echo Color::$bw."Balance".Color::$br." : ".Color::$bg."{$usd_balance}\n";
         echo Color::$bw."Ptc".Color::$br." : ".Color::$bc."{$unseen_ptc}\n";
+        echo Color::$bg."Apikey".Color::$br." : ".Color::$bw.$this->captcha->balance()."\n";
         echo self::$line;
         echo Color::$res;
     }
@@ -146,6 +147,7 @@ class Bot {
             $this->functions->timer("Viewing ads [$id]", $time);
             $link = "https://firefaucet.win/ptcverify?key=$key&id={$id}";
             $text = $ocr['response'];
+            print_r($ocr);
             $request = "captcha={$text}&csrf_token={$csrf}";
             $data = $this->functions->post($link, $this->header,$request);
             echo Color::$bg."Captcha ".Color::$br."   : ".Color::$bw."$text\n";
