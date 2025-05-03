@@ -794,15 +794,20 @@ class Logger {
         $this->log('ERROR', $message);
     }
 }
-
 class Scripts {
     private $scriptPath;
     private $logger;
-    public function __construct($path = DEFAULT_SCRIPT_DIR) {
+    private $autoUpdate;
+    public function __construct($path = DEFAULT_SCRIPT_DIR, $autoUpdate = true) {
         $this->scriptPath = $path;
         $this->logger = new Logger();
+        $this->autoUpdate = $autoUpdate;
         $this->checkScriptDirectory();
+        if ($this->autoUpdate) {
+            $this->updateRepository();
+        }
     }
+    
     private function checkScriptDirectory() {
         if (!is_dir($this->scriptPath)) {
             Terminal::warning("Script directory not found: {$this->scriptPath}");
@@ -818,6 +823,7 @@ class Scripts {
             }
         }
     }
+    
     private function cloneFromGithub() {
         Terminal::info("Cloning repository from GitHub...");
         try {
@@ -883,7 +889,12 @@ class Scripts {
         
         return $scripts;
     }
+    
     public function runScript($category) {
+        if ($this->autoUpdate) {
+            $this->updateRepository();
+        }
+        
         $scriptPath = "scripts"."/".$category."/bot.php";
         try {
             if (!file_exists($scriptPath)) {
@@ -915,14 +926,17 @@ class Scripts {
             return false;
         }
     }
+    
     private function showAbout() {
         Terminal::clear();
         Terminal::banner("About", "Script Library System");
         echo COLOR_INFO . "Script Library System v" . APP_VERSION . COLOR_RESET . PHP_EOL;
         echo COLOR_SECONDARY . "Author @scpwhite" . COLOR_RESET . PHP_EOL;
+        echo COLOR_SECONDARY . "Auto Git Update: " . ($this->autoUpdate ? COLOR_SUCCESS . "Enabled" : COLOR_ERROR . "Disabled") . COLOR_RESET . PHP_EOL;
         Terminal::waitForKey();
         return true;
     }
+    
     private function showAllScripts() {
         Terminal::clear();
         Terminal::banner("All Scripts", "Select by Category");
@@ -957,6 +971,7 @@ class Scripts {
             Terminal::error("Invalid selection.");
         }
     }
+    
     public function showMainMenu() {
         while (true) {
             Terminal::clear();
@@ -965,6 +980,7 @@ class Scripts {
                 $mainMenuOptions = [
                     "Show All Scripts",
                     "Update Repository",
+                    "Toggle Auto-Update [" . ($this->autoUpdate ? "ON" : "OFF") . "]",
                     "About",
                     "Exit"
                 ];                
@@ -978,6 +994,10 @@ class Scripts {
                     Terminal::waitForKey();
                 } else if ($selectedOption === "Update Repository") {
                     $this->updateRepository();
+                    Terminal::waitForKey();
+                } else if (strpos($selectedOption, "Toggle Auto-Update") === 0) {
+                    $this->autoUpdate = !$this->autoUpdate;
+                    Terminal::info("Auto-Update is now " . ($this->autoUpdate ? "enabled" : "disabled"));
                     Terminal::waitForKey();
                 } else if ($selectedOption === "About") {
                     $this->showAbout();
@@ -996,63 +1016,23 @@ class Scripts {
             }
         }
     }
-    private function updateRepository() {
+      private function updateRepository() {
         $repoPath = __DIR__ . '/Scripts';
-        if (!is_dir($repoPath)) {
-            Terminal::error("Folder not found: $repoPath");
-            Terminal::waitForKey();
-            return;
+        if (!is_dir($repoPath) || !is_dir($repoPath.'/.git')) {
+            $this->logger->info("No git repository found for auto-update");
+            return false;
         }
-        if (!is_dir($repoPath.'/.git')) {
-            Terminal::warning("No Git repository found at $repoPath.");
-            Terminal::info("Initializing new Git repository...");
-            exec("cd \"$repoPath\" && git init 2>&1", $outputInit, $returnInit);
-            if ($returnInit !== 0) {
-                Terminal::error("Failed to initialize Git:");
-                foreach ($outputInit as $line) {
-                    Terminal::error($line);
-                }
-                Terminal::waitForKey();
-                return;
-            }
-            Terminal::info("Adding all files to Git...");
-            exec("cd \"$repoPath\" && git add . 2>&1", $outputAdd, $returnAdd);
-            if ($returnAdd !== 0) {
-                Terminal::error("Failed to add files:");
-                foreach ($outputAdd as $line) {
-                    Terminal::error($line);
-                }
-                Terminal::waitForKey();
-                return;
-            }
-            Terminal::info("Making initial commit...");
-            exec("cd \"$repoPath\" && git commit -m \"Initial commit\" 2>&1", $outputCommit, $returnCommit);
-            if ($returnCommit !== 0) {
-                Terminal::error("Failed to commit:");
-                foreach ($outputCommit as $line) {
-                    Terminal::error($line);
-                }
-                Terminal::waitForKey();
-                return;
-            }
-
-            Terminal::success("Repository initialized and initial commit done!");
-            Terminal::waitForKey();
-            return;
-        }
-        Terminal::info("Updating repository...");
-        $output = [];
-        $returnVar = 0;
+        
+        $this->logger->info("Auto-updating repository...");
         exec("cd \"$repoPath\" && git pull 2>&1", $output, $returnVar);
+        
         if ($returnVar === 0) {
-            Terminal::success("Repository updated successfully!");
+            $this->logger->info("Repository auto-updated successfully");
+            return true;
         } else {
-            Terminal::error("Failed to update repository:");
-            foreach ($output as $line) {
-                Terminal::error($line);
-            }
+            $this->logger->error("Auto-update failed: " . implode("\n", $output));
+            return false;
         }
-        Terminal::waitForKey();
     }
 
     public function showScriptsMenu($category) {
@@ -1084,6 +1064,10 @@ class Scripts {
                 return;
             }
         }
+    }
+    
+    public function setAutoUpdate($enabled = true) {
+        $this->autoUpdate = (bool)$enabled;
     }
 }
 ?>
