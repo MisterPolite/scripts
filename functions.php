@@ -804,6 +804,7 @@ class Scripts {
         $this->autoUpdate = $autoUpdate;
         $this->checkScriptDirectory();
         if ($this->autoUpdate) {
+            echo "TEST\n";
             $this->updateRepository();
         }
     }
@@ -979,8 +980,8 @@ class Scripts {
             try {
                 $mainMenuOptions = [
                     "Show All Scripts",
-                    "Update Repository",
-                    "Toggle Auto-Update [" . ($this->autoUpdate ? "ON" : "OFF") . "]",
+ //                   "Update Repository",
+//                    "Toggle Auto-Update [" . ($this->autoUpdate ? "ON" : "OFF") . "]",
                     "About",
                     "Exit"
                 ];                
