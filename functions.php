@@ -889,7 +889,6 @@ class Scripts {
     }
     
     public function runScript($category) {
-        $this->updateRepository();
         $scriptPath = "scripts"."/".$category."/bot.php";
         try {
             if (!file_exists($scriptPath)) {
@@ -1019,7 +1018,7 @@ class Scripts {
         }
         
         $this->logger->info("Auto-updating repository...");
-        exec("cd \"$repoPath\" && git pull 2>&1", $output, $returnVar);
+        exec("cd \"$repoPath\" && git pull", $output, $returnVar);
         
         if ($returnVar === 0) {
             $this->logger->info("Repository auto-updated successfully");
