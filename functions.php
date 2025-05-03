@@ -1011,9 +1011,10 @@ class Scripts {
         }
     }
       private function updateRepository() {
-        $repoPath = __DIR__ . '/Scripts';
+        $repoPath = __DIR__;
         if (!is_dir($repoPath) || !is_dir($repoPath.'/.git')) {
             $this->logger->info("No git repository found for auto-update");
+            echo "No git repository found for auto-update";
             return false;
         }
         
@@ -1022,6 +1023,7 @@ class Scripts {
         
         if ($returnVar === 0) {
             $this->logger->info("Repository auto-updated successfully");
+            echo "Repository auto-updated successfully";
             return true;
         } else {
             $this->logger->error("Auto-update failed: " . implode("\n", $output));
@@ -1030,6 +1032,7 @@ class Scripts {
     }
 
     public function showScriptsMenu($category) {
+        $this->updateRepository();
         while (true) {
             try {
                 Terminal::clear();
