@@ -803,10 +803,7 @@ class Scripts {
         $this->logger = new Logger();
         $this->autoUpdate = $autoUpdate;
         $this->checkScriptDirectory();
-        if ($this->autoUpdate) {
-            echo "TEST\n";
-            $this->updateRepository();
-        }
+        $this->updateRepository();
     }
     
     private function checkScriptDirectory() {
@@ -892,10 +889,7 @@ class Scripts {
     }
     
     public function runScript($category) {
-        if ($this->autoUpdate) {
-            $this->updateRepository();
-        }
-        
+        $this->updateRepository();
         $scriptPath = "scripts"."/".$category."/bot.php";
         try {
             if (!file_exists($scriptPath)) {
