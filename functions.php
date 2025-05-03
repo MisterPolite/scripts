@@ -927,7 +927,6 @@ class Scripts {
         Terminal::banner("About", "Script Library System");
         echo COLOR_INFO . "Script Library System v" . APP_VERSION . COLOR_RESET . PHP_EOL;
         echo COLOR_SECONDARY . "Author @scpwhite" . COLOR_RESET . PHP_EOL;
-        echo COLOR_SECONDARY . "Auto Git Update: " . ($this->autoUpdate ? COLOR_SUCCESS . "Enabled" : COLOR_ERROR . "Disabled") . COLOR_RESET . PHP_EOL;
         Terminal::waitForKey();
         return true;
     }
@@ -974,8 +973,6 @@ class Scripts {
             try {
                 $mainMenuOptions = [
                     "Show All Scripts",
- //                   "Update Repository",
-//                    "Toggle Auto-Update [" . ($this->autoUpdate ? "ON" : "OFF") . "]",
                     "About",
                     "Exit"
                 ];                
@@ -1032,143 +1029,40 @@ class Scripts {
             return false;
         }
     }
-    private function deleteAllScriptFiles() {
-        $allSuccess = true;
-        
-        // Delete scripts directory
-        if (is_dir(__DIR__ . '/scripts')) {
-            $dirSuccess = $this->deleteDirectory(__DIR__ . '/scripts');
-            if (!$dirSuccess) {
-                Terminal::error("Failed to delete scripts directory");
-                $allSuccess = false;
-            } else {
-                Terminal::info("Scripts directory deleted");
-            }
-        }
-        
-        // Delete functions.php
-        if (file_exists(__DIR__ . '/functions.php')) {
-            $funcSuccess = $this->deleteSingleFile(__DIR__ . '/functions.php');
-            if (!$funcSuccess) {
-                Terminal::error("Failed to delete functions.php");
-                $allSuccess = false;
-            } else {
-                Terminal::info("functions.php deleted");
-            }
-        }
-        
-        // Delete bot.php
-        if (file_exists(__DIR__ . '/bot.php')) {
-            $botSuccess = $this->deleteSingleFile(__DIR__ . '/bot.php');
-            if (!$botSuccess) {
-                Terminal::error("Failed to delete bot.php");
-                $allSuccess = false;
-            } else {
-                Terminal::info("bot.php deleted");
-            }
-        }
-        return $allSuccess;
-    }
-    
-/**
- * Deletes selected script files (scripts folder, functions.php, bot.php)
- * Provides options to delete individual files or all at once
- */
-private function deleteScriptFiles() {
-    Terminal::clear();
-    Terminal::banner("Delete Script Files", "Warning: This action cannot be undone");
-    
-    $options = [
-        "Delete all script files",
-        "Delete scripts folder only",
-        "Delete functions.php only",
-        "Delete bot.php only",
-        "Delete scripts in a specific category",
-        "Back to Main Menu"
-    ];
-    
-    $choice = Terminal::menu($options, "Select files to delete");
-    
-    if ($choice === 5) { // Back to Main Menu
-        return;
-    }
-    
-    // Confirm deletion
-    Terminal::warning("Are you sure you want to delete these files? This cannot be undone.");
-    $confirmOptions = ["Yes, delete files", "No, cancel"];
-    $confirm = Terminal::menu($confirmOptions, "Confirm Deletion");
-    
-    if ($confirm !== 0) {
-        Terminal::info("Deletion cancelled");
-        Terminal::waitForKey();
-        return;
-    }
-    
-    $success = false;
-    
-    switch ($choice) {
-        case 0: // Delete all
-            $success = $this->deleteAllScriptFiles();
-            break;
-        case 1: // Delete scripts folder
-            $success = $this->deleteDirectory(__DIR__ . '/scripts');
-            break;
-        case 2: // Delete functions.php
-            $success = $this->deleteSingleFile(__DIR__ . '/functions.php');
-            break;
-        case 3: // Delete bot.php
-            $success = $this->deleteSingleFile(__DIR__ . '/bot.php');
-            break;
-        case 4: // Delete scripts in specific category
-            $this->deleteScriptsInCategory();
-            return; // This method handles its own messaging
-    }
-    
-    if ($success) {
-        Terminal::success("Files deleted successfully");
-    } else {
-        Terminal::error("Failed to delete some files");
-    }
-    
-    Terminal::waitForKey();
-}
-
-
     private function deleteScript() {
         $allSuccess = true;
         if (is_dir(__DIR__ . '/scripts')) {
             $dirSuccess = $this->deleteDirectory(__DIR__ . '/scripts');
             if (!$dirSuccess) {
-                Terminal::error("Failed to delete scripts directory");
+                $this->logger->error("Failed to delete scripts directory");
                 $allSuccess = false;
             } else {
-                Terminal::info("Scripts directory deleted");
+                $this->logger->info("Scripts directory deleted");
             }
         }
         if (file_exists(__DIR__ . '/functions.php')) {
             $funcSuccess = $this->deleteFile(__DIR__ . '/functions.php');
             if (!$funcSuccess) {
-                Terminal::error("Failed to delete functions.php");
+                $this->logger->error("Failed to delete functions.php");
                 $allSuccess = false;
             } else {
-                Terminal::info("functions.php deleted");
+                $this->logger->info("functions.php deleted");
             }
         }
         if (file_exists(__DIR__ . '/bot.php')) {
             $botSuccess = $this->deleteFile(__DIR__ . '/bot.php');
             if (!$botSuccess) {
-                Terminal::error("Failed to delete bot.php");
+                $this->logger->error("Failed to delete bot.php");
                 $allSuccess = false;
             } else {
-                Terminal::info("bot.php deleted");
+                $this->logger->info("bot.php deleted");
             }
         }
-        
         return $allSuccess;
     }
     private function deleteDirectory($dirPath) {
         if (!is_dir($dirPath)) {
-            Terminal::warning("Directory not found: " . basename($dirPath));
+            $this->logger->warning("Directory not found: " . basename($dirPath));
             return false;
         }
         
@@ -1181,7 +1075,7 @@ private function deleteScriptFiles() {
             foreach ($files as $fileinfo) {
                 $action = ($fileinfo->isDir() ? 'rmdir' : 'unlink');
                 if (!$action($fileinfo->getRealPath())) {
-                    Terminal::error("Failed to delete: " . $fileinfo->getRealPath());
+                    $this->logger->error("Failed to delete: " . $fileinfo->getRealPath());
                     return false;
                 }
             }
