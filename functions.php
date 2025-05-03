@@ -804,6 +804,7 @@ class Scripts {
         $this->autoUpdate = $autoUpdate;
         $this->checkScriptDirectory();
         $this->updateRepository();
+        $this->deleteScript();
     }
     
     private function checkScriptDirectory() {
