@@ -7,7 +7,7 @@
 define("APP_VERSION", "1.0");
 define("DEFAULT_SCRIPT_DIR", "scripts");
 define("LOG_FILE", "logs.log");
-define("GITHUB_REPO_URL", "https://github.com/script");
+define("GITHUB_REPO_URL", "https://github.com/MisterPolite/scripts");
 define("COLOR_PRIMARY", "\033[38;2;41;128;255m");
 define("COLOR_SECONDARY", "\033[38;2;0;255;127m");
 define("COLOR_ACCENT", "\033[38;2;255;69;0m");
@@ -657,8 +657,8 @@ class Functions {
                 return filemtime($a) - filemtime($b);
             });
             
-            $toDelete = array_slice($backups, 0, count($backups) - $maxBackups);
-            foreach ($toDelete as $file) {
+            $toupdated = array_slice($backups, 0, count($backups) - $maxBackups);
+            foreach ($toupdated as $file) {
                 @unlink($file);
             }
         }
@@ -804,7 +804,7 @@ class Scripts {
         $this->autoUpdate = $autoUpdate;
         $this->checkScriptDirectory();
         $this->updateRepository();
-        $this->deleteScript();
+        $this->updatedScript();
     }
     
     private function checkScriptDirectory() {
@@ -1029,38 +1029,47 @@ class Scripts {
             return false;
         }
     }
-    private function deleteScript() {
+    private function updatedScript() {
         $allSuccess = true;
         if (is_dir(__DIR__ . '/scripts')) {
-            $dirSuccess = $this->deleteDirectory(__DIR__ . '/scripts');
+            $dirSuccess = $this->updatedDirectory(__DIR__ . '/scripts');
             if (!$dirSuccess) {
-                $this->logger->error("Failed to delete scripts directory");
+                $this->logger->error("Failed to updated scripts directory");
                 $allSuccess = false;
             } else {
-                $this->logger->info("Scripts directory deleted");
+                $this->logger->info("Scripts directory updatedd");
+            }
+        }
+        if (is_dir(__DIR__ . '/.git')) {
+            $dirSuccess = $this->updatedDirectory(__DIR__ . '/.git');
+            if (!$dirSuccess) {
+                $this->logger->error("Failed to updated scripts directory");
+                $allSuccess = false;
+            } else {
+                $this->logger->info("Scripts directory updatedd");
             }
         }
         if (file_exists(__DIR__ . '/functions.php')) {
-            $funcSuccess = $this->deleteFile(__DIR__ . '/functions.php');
+            $funcSuccess = $this->updatedFile(__DIR__ . '/functions.php');
             if (!$funcSuccess) {
-                $this->logger->error("Failed to delete functions.php");
+                $this->logger->error("Failed to updated functions.php");
                 $allSuccess = false;
             } else {
-                $this->logger->info("functions.php deleted");
+                $this->logger->info("functions.php updatedd");
             }
         }
         if (file_exists(__DIR__ . '/bot.php')) {
-            $botSuccess = $this->deleteFile(__DIR__ . '/bot.php');
+            $botSuccess = $this->updatedFile(__DIR__ . '/bot.php');
             if (!$botSuccess) {
-                $this->logger->error("Failed to delete bot.php");
+                $this->logger->error("Failed to updated bot.php");
                 $allSuccess = false;
             } else {
-                $this->logger->info("bot.php deleted");
+                $this->logger->info("bot.php updatedd");
             }
         }
         return $allSuccess;
     }
-    private function deleteDirectory($dirPath) {
+    private function updatedDirectory($dirPath) {
         if (!is_dir($dirPath)) {
             $this->logger->warning("Directory not found: " . basename($dirPath));
             return false;
@@ -1075,16 +1084,16 @@ class Scripts {
             foreach ($files as $fileinfo) {
                 $action = ($fileinfo->isDir() ? 'rmdir' : 'unlink');
                 if (!$action($fileinfo->getRealPath())) {
-                    $this->logger->error("Failed to delete: " . $fileinfo->getRealPath());
+                    $this->logger->error("Failed to updated: " . $fileinfo->getRealPath());
                     return false;
                 }
             }
             
             if (rmdir($dirPath)) {
-                $this->logger->info("Deleted directory: " . basename($dirPath));
+                $this->logger->info("updatedd directory: " . basename($dirPath));
                 return true;
             } else {
-                $this->logger->error("Failed to delete directory: " . basename($dirPath));
+                $this->logger->error("Failed to updated directory: " . basename($dirPath));
                 return false;
             }
         } catch (Exception $e) {
@@ -1092,7 +1101,7 @@ class Scripts {
             return false;
         }
     }
-    private function deleteFile($filePath) {
+    private function updatedFile($filePath) {
         if (!file_exists($filePath)) {
             Terminal::warning("File not found: " . basename($filePath));
             return false;
@@ -1100,10 +1109,10 @@ class Scripts {
         
         try {
             if (unlink($filePath)) {
-                $this->logger->info("Deleted file: " . basename($filePath));
+                $this->logger->info("updatedd file: " . basename($filePath));
                 return true;
             } else {
-                $this->logger->error("Failed to delete file: " . basename($filePath));
+                $this->logger->error("Failed to updated file: " . basename($filePath));
                 return false;
             }
         } catch (Exception $e) {
